@@ -35,8 +35,8 @@ import numpy as np
 # In[2]:
 
 
-def get_img(file_name):
-    file_dir = os.path.join(datasets_path,"Training100","ASOCT_Image",file_name)
+def get_img(file_name,dataset_path):
+    file_dir = os.path.join(dataset_path,"Training100","ASOCT_Image",file_name)
     if os.path.exists(file_dir) == False:
         print("not exist :",file_dir)
     img = cv2.imread(file_dir)
@@ -131,6 +131,7 @@ def GaussieNoisy(image,sigma):
 class AGE_DataSet(torch.utils.data.Dataset):
     def __init__(self,Training100_Location,datasets_config):
         super(AGE_DataSet,self).__init__()
+        self.dataset_path = datasets_config['dataset_path']
         self.img_size = datasets_config['img_size']
         self.SNR = datasets_config['SNR']
         self.Noisy_prob = datasets_config['Noisy_prob']
@@ -143,7 +144,7 @@ class AGE_DataSet(torch.utils.data.Dataset):
         self.X2 = Training100_Location['X2']
         self.Y2 = Training100_Location['Y2']
         self.len = len(Training100_Location)
-        self.img_shape = get_img(Training100_Location['ASOCT_Name'][0]).shape
+        self.img_shape = get_img(Training100_Location['ASOCT_Name'][0],self.dataset_path).shape
         self.Augmentation = Augmentation(datasets_config)
         self.transform = get_transform()
         
@@ -159,7 +160,7 @@ class AGE_DataSet(torch.utils.data.Dataset):
     
     def __getitem__(self,index):
         idx = (index// 2)%self.len
-        img = get_img(self.ASOCT_Name[idx])
+        img = get_img(self.ASOCT_Name[idx],self.dataset_path)
         label = self.Left_Label[idx] if index % 2 == 0 else self.Left_Label[idx]
         point = (self.X1[idx],self.Y1[idx]) if index % 2 == 0 else (self.X2[idx],self.Y2[idx])
         img,point = self.resize_img(img,point,index%2 == 0)
@@ -191,8 +192,8 @@ class AGE_DataSet(torch.utils.data.Dataset):
 
 
 def get_dataloader():
-    datasets_path = datasets_config['dataset_path']
-    Training100_Location_dir = os.path.join(datasets_path,'Training100','Training100_Location.xlsx')
+    dataset_path = datasets_config['dataset_path']
+    Training100_Location_dir = os.path.join(dataset_path,'Training100','Training100_Location.xlsx')
     Training100_Location = pd.read_excel(Training100_Location_dir)
     num_workers = datasets_config['num_workers']
     batch_size = datasets_config['batch_size']
@@ -202,15 +203,14 @@ def get_dataloader():
                                             shuffle=True,
                                             num_workers=num_workers)
     return dataloader
-    #for i,(img,point,label) in enumerate(dataloader):
-    #    print(img[0])
-    #    break
 
 
-# In[ ]:
+# In[7]:
 
 
-
+dataloader =     get_dataloader()
+for i,(img,point,label) in enumerate(dataloader):
+    print(point[0][0],point[0][1])
 
 
 # In[ ]:
