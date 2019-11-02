@@ -72,7 +72,8 @@ class Augmentation(object):
         super(Augmentation,self).__init__()
         self.rotate_angle = datasets_config['rotate_angle']
         self.GaussianBlur_sigma = datasets_config['GaussianBlur_sigma']
-        
+        self.scale_size = (datasets_config['scale_size'],datasets_config['scale_size'])
+            
     def __call__(self, sample):
         image, point= sample['image'], sample['point']
         keypoints=ia.KeypointsOnImage([
@@ -82,8 +83,11 @@ class Augmentation(object):
         seq=iaa.Sequential([
             iaa.Affine(
                 rotate=(-self.rotate_angle,self.rotate_angle)),
+            iaa.Resize(self.scale_size,
+              interpolation='cubic'),
             #iaa.GaussianBlur(
             #    sigma=iap.Uniform(0.0, self.GaussianBlur_sigma))
+            
             ])
         # augmentation choices
         seq_det = seq.to_deterministic()
@@ -202,15 +206,19 @@ def get_dataloader():
                                             batch_size=batch_size, 
                                             shuffle=True,
                                             num_workers=num_workers)
+    img,point,_ = age_dataset[0]
+    print(img.shape)
+    #show_label(img,point)
     return dataloader
 
 
 # In[7]:
 
 
-dataloader =     get_dataloader()
-for i,(img,point,label) in enumerate(dataloader):
-    print(point[0][0],point[0][1])
+#dataloader =     get_dataloader()
+#for i,(img,point,label) in enumerate(dataloader):
+#    print(i)
+    
 
 
 # In[ ]:
